@@ -1,0 +1,22 @@
+{
+    "name": "classroom-seating",
+    "version": "1.0.0",
+    "description": "Classroom seating management system",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js"
+    },
+    "keywords": [
+        "nodejs",
+        "express",
+        "sqlite"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^17.2.3",
+        "express": "^4.18.2",
+        "sqlite3": "^5.1.6"
+    }
+}

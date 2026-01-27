@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điểm danh</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .board-label {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .classroom {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .seat {
+            width: 70px;
+            height: 70px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            font-size: 0.85em;
+        }
+
+        .seat:hover:not(.occupied):not(.my-seat) {
+            border-color: #667eea;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .seat.available {
+            border-color: #27ae60;
+            background: #e8f8f0;
+        }
+
+        .seat.occupied {
+            border-color: #e74c3c;
+            background: #fadbd8;
+            cursor: not-allowed;
+        }
+
+        .seat.my-seat {
+            border-color: #3498db;
+            background: #d6eaf8;
+            border-width: 4px;
+        }
+
+        .seat::after {
+            content: attr(data-position);
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.7em;
+            color: #999;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .status.info {
+            background: #d6eaf8;
+            color: #1f618d;
+        }
+
+        .status.warning {
+            background: #fcf3cf;
+            color: #7d6608;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #0e6251;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            color: #922b21;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 3px solid;
+        }
+
+        .legend-box.available {
+            border-color: #27ae60;
+            background: #e8f8f0;
+        }
+
+        .legend-box.occupied {
+            border-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .legend-box.mine {
+            border-color: #3498db;
+            background: #d6eaf8;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .classroom {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .seat {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎓 Điểm danh</h1>
+        <p class="subtitle">Chọn vị trí ngồi của bạn trong lớp học</p>
+
+        <div class="board-label">📋 BẢNG (Phía trước)</div>
+
+        <div class="classroom" id="classroom">
+            <!-- Left Section -->
+            <div class="section">
+                <div class="section-title">Dãy Trái</div>
+                <div id="left-section"></div>
+            </div>
+
+            <!-- Middle Section -->
+            <div class="section">
+                <div class="section-title">Dãy Giữa</div>
+                <div id="middle-section"></div>
+            </div>
+
+            <!-- Right Section -->
+            <div class="section">
+                <div class="section-title">Dãy Phải</div>
+                <div id="right-section"></div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box available"></div>
+                <span>Còn trống</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box occupied"></div>
+                <span>Đã có người</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box mine"></div>
+                <span>Chỗ của bạn</span>
+            </div>
+        </div>
+
+        <div id="status" class="status info">
+            Vui lòng chọn một chỗ ngồi trống để đăng ký
+        </div>
+    </div>
+
+    <!-- Modal nhập tên -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2>Điểm danh</h2>
+            <input type="text" id="firstName" placeholder="Nhập họ của bạn..." maxlength="50">
+            <input type="text" id="lastName" placeholder="Nhập tên của bạn..." maxlength="50">
+            <div class="modal-buttons">
+                <button class="btn btn-submit" onclick="submitSeat()">Xác nhận</button>
+                <button class="btn btn-cancel" onclick="closeModal()">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedSeatId = null;
+        let hasSubmitted = false;
+        let currentSettings = null;
+
+        // Kiểm tra IP đã submit chưa
+        async function checkIPStatus() {
+            try {
+                const response = await fetch('/api/check-ip');
+                const data = await response.json();
+                hasSubmitted = data.hasSubmitted;
+
+                if (hasSubmitted) {
+                    showStatus('Bạn đã Điểm danh rồi!', 'warning');
+                }
+            } catch (error) {
+                console.error('Error checking IP:', error);
+            }
+        }
+
+        // Load danh sách chỗ ngồi
+        async function loadSeats() {
+            try {
+                const [seatsRes, settingsRes] = await Promise.all([
+                    fetch('/api/seats/user'),
+                    fetch('/api/admin/settings')
+                ]);
+                const seats = await seatsRes.json();
+                const settings = await settingsRes.json();
+                currentSettings = settings;
+
+                renderSeats(seats, settings);
+            } catch (error) {
+                showStatus('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+            }
+        }
+
+        // Render chỗ ngồi
+        function renderSeats(seats, settings) {
+            const leftSection = document.getElementById('left-section');
+            const middleSection = document.getElementById('middle-section');
+            const rightSection = document.getElementById('right-section');
+
+            leftSection.innerHTML = '';
+            middleSection.innerHTML = '';
+            rightSection.innerHTML = '';
+
+            const seatsBySection = {
+                left: {},
+                middle: {},
+                right: {}
+            };
+
+            seats.forEach(seat => {
+                if (!seatsBySection[seat.section][seat.row]) {
+                    seatsBySection[seat.section][seat.row] = [];
+                }
+                seatsBySection[seat.section][seat.row].push(seat);
+            });
+
+            // Render từng section với số hàng động
+            for (let row = 1; row <= settings.rows; row++) {
+                // Left section
+                if (settings.left_cols > 0) {
+                    const leftRow = document.createElement('div');
+                    leftRow.className = 'row';
+                    (seatsBySection.left[row] || []).forEach(seat => {
+                        leftRow.appendChild(createSeatElement(seat));
+                    });
+                    leftSection.appendChild(leftRow);
+                }
+
+                // Middle section
+                if (settings.middle_cols > 0) {
+                    const middleRow = document.createElement('div');
+                    middleRow.className = 'row';
+                    (seatsBySection.middle[row] || []).forEach(seat => {
+                        middleRow.appendChild(createSeatElement(seat));
+                    });
+                    middleSection.appendChild(middleRow);
+                }
+
+                // Right section
+                if (settings.right_cols > 0) {
+                    const rightRow = document.createElement('div');
+                    rightRow.className = 'row';
+                    (seatsBySection.right[row] || []).forEach(seat => {
+                        rightRow.appendChild(createSeatElement(seat));
+                    });
+                    rightSection.appendChild(rightRow);
+                }
+            }
+
+            // Ẩn section nếu có 0 chỗ
+            document.querySelectorAll('.section')[0].style.display = settings.left_cols > 0 ? 'flex' : 'none';
+            document.querySelectorAll('.section')[1].style.display = settings.middle_cols > 0 ? 'flex' : 'none';
+            document.querySelectorAll('.section')[2].style.display = settings.right_cols > 0 ? 'flex' : 'none';
+        }
+
+        // Tạo element cho mỗi chỗ ngồi
+        function createSeatElement(seat) {
+            const div = document.createElement('div');
+            div.className = 'seat';
+            div.dataset.id = seat.id;
+            div.dataset.position = `${seat.row}-${seat.col}`;
+
+            if (seat.isMyIP) {
+                div.classList.add('my-seat');
+                div.textContent = '✓';
+                div.title = 'Chỗ của bạn';
+            } else if (seat.occupied) {
+                div.classList.add('occupied');
+                div.textContent = '✖';
+                div.title = 'Đã có người';
+            } else {
+                div.classList.add('available');
+                div.textContent = '○';
+                div.title = 'Còn trống - Click để đăng ký';
+                div.onclick = () => selectSeat(seat.id);
+            }
+
+            return div;
+        }
+
+        // Chọn chỗ ngồi
+        function selectSeat(seatId) {
+            if (hasSubmitted) {
+                showStatus('Bạn đã Điểm danh rồi!', 'warning');
+                return;
+            }
+
+            selectedSeatId = seatId;
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('firstName').focus();
+        }
+
+        // Đóng modal
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            selectedSeatId = null;
+        }
+
+        // Submit đăng ký
+        async function submitSeat() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+
+            if (!firstName || !lastName) {
+                alert('Vui lòng nhập đầy đủ Họ và Tên!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/submit-seat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        seatId: selectedSeatId,
+                        firstName: firstName,
+                        lastName: lastName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus(data.message, 'success');
+                    hasSubmitted = true;
+                    closeModal();
+                    loadSeats();
+                } else {
+                    showStatus(data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Lỗi kết nối: ' + error.message, 'error');
+            }
+        }
+
+        // Hiển thị thông báo
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+
+        // Enter để submit
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enter để submit từ cả 2 input fields
+            document.getElementById('firstName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('lastName').focus();
+                }
+            });
+            
+            document.getElementById('lastName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    submitSeat();
+                }
+            });
+
+            checkIPStatus();
+            loadSeats();
+
+            // Auto refresh mỗi 5 giây
+            setInterval(loadSeats, 5000);
+        });
+
+        // Đóng modal khi click bên ngoài
+        window.onclick = function (event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+
+</html>

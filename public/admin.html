@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Quản lý chỗ ngồi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Auth Modal Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .auth-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .auth-modal h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .auth-modal input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .auth-modal input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .auth-modal button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .auth-modal button:hover {
+            transform: translateY(-2px);
+        }
+
+        .auth-modal .error-msg {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .container.authenticated {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-export {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-refresh {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: #2980b9;
+        }
+
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #c0392b;
+        }
+
+        .btn-settings {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .btn-settings:hover {
+            background: #8e44ad;
+        }
+
+        .settings-panel {
+            display: none;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-panel h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .settings-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #229954;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        .board-label {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .classroom {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .seat {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            font-size: 0.75em;
+            text-align: center;
+            padding: 5px;
+            word-wrap: break-word;
+        }
+
+        .seat.available {
+            border-color: #27ae60;
+            background: #e8f8f0;
+        }
+
+        .seat.occupied {
+            border-color: #3498db;
+            background: #d6eaf8;
+            font-weight: bold;
+            color: #1f618d;
+        }
+
+        .seat::after {
+            content: attr(data-position);
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.7em;
+            color: #999;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .student-list {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .student-list h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        .student-item:hover {
+            background: #f0f8ff;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .student-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #0e6251;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            color: #922b21;
+        }
+
+        @media (max-width: 768px) {
+            .classroom {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .seat {
+                width: 70px;
+                height: 70px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        /* Scrollbar styling */
+        .list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .list-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .list-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Authentication Modal -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-modal">
+            <h2>🔐 Xác thực Admin</h2>
+            <p style="color: #666; margin-bottom: 20px;">Vui lòng nhập key để truy cập</p>
+            <input type="password" id="adminKeyInput" placeholder="Nhập admin key..." onkeypress="if(event.key === 'Enter') verifyAdminKey()">
+            <button onclick="verifyAdminKey()">Xác thực</button>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🔐 Admin - Quản lý chỗ ngồi</h1>
+        <p class="subtitle">Xem và quản lý toàn bộ chỗ ngồi trong lớp</p>
+
+        <div class="controls">
+            <button class="btn btn-settings" onclick="toggleSettings()">⚙️ Cấu hình</button>
+            <button class="btn btn-export" onclick="exportStudentList()">📥 Xuất danh sách A-Z</button>
+            <button class="btn btn-refresh" onclick="loadSeats()">🔄 Làm mới</button>
+            <button class="btn btn-reset" onclick="resetAllData()">🗑️ Reset toàn bộ</button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <h2>⚙️ Cấu hình lớp học</h2>
+            <form class="settings-form" onsubmit="saveSettings(event)">
+                <div class="form-group">
+                    <label for="rows">Số hàng:</label>
+                    <input type="number" id="rows" min="1" max="20" required>
+                </div>
+                <div class="form-group">
+                    <label for="leftCols">Dãy trái (số chỗ):</label>
+                    <input type="number" id="leftCols" min="0" max="10" required>
+                </div>
+                <div class="form-group">
+                    <label for="middleCols">Dãy giữa (số chỗ):</label>
+                    <input type="number" id="middleCols" min="0" max="10" required>
+                </div>
+                <div class="form-group">
+                    <label for="rightCols">Dãy phải (số chỗ):</label>
+                    <input type="number" id="rightCols" min="0" max="10" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-save">💾 Lưu cấu hình</button>
+                    <button type="button" class="btn btn-cancel" onclick="toggleSettings()">❌ Hủy</button>
+                </div>
+            </form>
+            <p style="text-align: center; color: #e74c3c; margin-top: 15px; font-weight: bold;">
+                ⚠️ Lưu ý: Thay đổi cấu hình sẽ xóa toàn bộ dữ liệu hiện tại!
+            </p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalSeats">48</div>
+                <div class="stat-label">Tổng số chỗ</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="occupiedSeats">0</div>
+                <div class="stat-label">Đã đăng ký</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="availableSeats">48</div>
+                <div class="stat-label">Còn trống</div>
+            </div>
+        </div>
+
+        <div class="board-label">📋 BẢNG (Phía trước)</div>
+
+        <div class="classroom" id="classroom">
+            <!-- Left Section -->
+            <div class="section">
+                <div class="section-title">Dãy Trái (2 chỗ)</div>
+                <div id="left-section"></div>
+            </div>
+
+            <!-- Middle Section -->
+            <div class="section">
+                <div class="section-title">Dãy Giữa (4 chỗ)</div>
+                <div id="middle-section"></div>
+            </div>
+
+            <!-- Right Section -->
+            <div class="section">
+                <div class="section-title">Dãy Phải (2 chỗ)</div>
+                <div id="right-section"></div>
+            </div>
+        </div>
+
+        <div class="student-list">
+            <h2>📋 Danh sách sinh viên (A-Z)</h2>
+            <div class="list-container" id="studentList">
+                <p style="text-align: center; color: #999;">Chưa có sinh viên nào đăng ký</p>
+            </div>
+        </div>
+
+        <div id="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Authentication functions
+        async function verifyAdminKey() {
+            const key = document.getElementById('adminKeyInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (!key) {
+                errorMsg.textContent = 'Vui lòng nhập key';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ key })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Authentication successful
+                    document.getElementById('authOverlay').style.display = 'none';
+                    document.querySelector('.container').classList.add('authenticated');
+                    errorMsg.textContent = '';
+                    loadSeats(); // Load data after authentication
+                } else {
+                    errorMsg.textContent = data.message || 'Key không đúng';
+                    document.getElementById('adminKeyInput').value = '';
+                    document.getElementById('adminKeyInput').focus();
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Lỗi kết nối: ' + error.message;
+            }
+        }
+
+        // Focus on input when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('adminKeyInput').focus();
+        });
+
+        let currentSettings = null;
+
+        // Toggle settings panel
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active')) {
+                loadSettings();
+            }
+        }
+
+        // Load settings
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/admin/settings');
+                const settings = await response.json();
+                currentSettings = settings;
+
+                document.getElementById('rows').value = settings.rows;
+                document.getElementById('leftCols').value = settings.left_cols;
+                document.getElementById('middleCols').value = settings.middle_cols;
+                document.getElementById('rightCols').value = settings.right_cols;
+            } catch (error) {
+                showStatus('Lỗi khi tải cấu hình: ' + error.message, 'error');
+            }
+        }
+
+        // Save settings
+        async function saveSettings(event) {
+            event.preventDefault();
+
+            const rows = parseInt(document.getElementById('rows').value);
+            const leftCols = parseInt(document.getElementById('leftCols').value);
+            const middleCols = parseInt(document.getElementById('middleCols').value);
+            const rightCols = parseInt(document.getElementById('rightCols').value);
+
+            if (!confirm('⚠️ CẢNH BÁO: Thay đổi cấu hình sẽ XÓA TOÀN BỘ dữ liệu hiện tại!\n\nBạn có chắc chắn muốn tiếp tục?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rows: rows,
+                        left_cols: leftCols,
+                        middle_cols: middleCols,
+                        right_cols: rightCols
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus(data.message, 'success');
+                    toggleSettings();
+                    loadSeats();
+                } else {
+                    showStatus(data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Lỗi kết nối: ' + error.message, 'error');
+            }
+        }
+
+        // Load danh sách chỗ ngồi
+        async function loadSeats() {
+            try {
+                const [seatsRes, settingsRes] = await Promise.all([
+                    fetch('/api/seats'),
+                    fetch('/api/admin/settings')
+                ]);
+                const seats = await seatsRes.json();
+                const settings = await settingsRes.json();
+                currentSettings = settings;
+
+                renderSeats(seats, settings);
+                updateStats(seats);
+                loadStudentList();
+                updateSectionTitles(settings);
+            } catch (error) {
+                showStatus('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+            }
+        }
+
+        // Update section titles
+        function updateSectionTitles(settings) {
+            const titles = document.querySelectorAll('.section-title');
+            if (titles[0]) titles[0].textContent = `Dãy Trái (${settings.left_cols} chỗ)`;
+            if (titles[1]) titles[1].textContent = `Dãy Giữa (${settings.middle_cols} chỗ)`;
+            if (titles[2]) titles[2].textContent = `Dãy Phải (${settings.right_cols} chỗ)`;
+        }
+
+        // Render chỗ ngồi
+        function renderSeats(seats, settings) {
+            const leftSection = document.getElementById('left-section');
+            const middleSection = document.getElementById('middle-section');
+            const rightSection = document.getElementById('right-section');
+
+            leftSection.innerHTML = '';
+            middleSection.innerHTML = '';
+            rightSection.innerHTML = '';
+
+            const seatsBySection = {
+                left: {},
+                middle: {},
+                right: {}
+            };
+
+            seats.forEach(seat => {
+                if (!seatsBySection[seat.section][seat.row]) {
+                    seatsBySection[seat.section][seat.row] = [];
+                }
+                seatsBySection[seat.section][seat.row].push(seat);
+            });
+
+            // Render từng section với số hàng động
+            for (let row = 1; row <= settings.rows; row++) {
+                // Left section
+                if (settings.left_cols > 0) {
+                    const leftRow = document.createElement('div');
+                    leftRow.className = 'row';
+                    (seatsBySection.left[row] || []).forEach(seat => {
+                        leftRow.appendChild(createSeatElement(seat));
+                    });
+                    leftSection.appendChild(leftRow);
+                }
+
+                // Middle section
+                if (settings.middle_cols > 0) {
+                    const middleRow = document.createElement('div');
+                    middleRow.className = 'row';
+                    (seatsBySection.middle[row] || []).forEach(seat => {
+                        middleRow.appendChild(createSeatElement(seat));
+                    });
+                    middleSection.appendChild(middleRow);
+                }
+
+                // Right section
+                if (settings.right_cols > 0) {
+                    const rightRow = document.createElement('div');
+                    rightRow.className = 'row';
+                    (seatsBySection.right[row] || []).forEach(seat => {
+                        rightRow.appendChild(createSeatElement(seat));
+                    });
+                    rightSection.appendChild(rightRow);
+                }
+            }
+
+            // Ẩn section nếu có 0 chỗ
+            document.querySelectorAll('.section')[0].style.display = settings.left_cols > 0 ? 'flex' : 'none';
+            document.querySelectorAll('.section')[1].style.display = settings.middle_cols > 0 ? 'flex' : 'none';
+            document.querySelectorAll('.section')[2].style.display = settings.right_cols > 0 ? 'flex' : 'none';
+        }
+
+        // Tạo element cho mỗi chỗ ngồi (không thay đổi)
+        function createSeatElement(seat) {
+            const div = document.createElement('div');
+            div.className = 'seat';
+            div.dataset.id = seat.id;
+            div.dataset.position = `H${seat.row}-C${seat.col}`;
+
+            if (seat.first_name && seat.last_name) {
+                div.classList.add('occupied');
+                const fullName = `${seat.first_name} ${seat.last_name}`;
+                div.textContent = fullName;
+                div.title = `${fullName} - Hàng ${seat.row}, Cột ${seat.col}`;
+            } else {
+                div.classList.add('available');
+                div.textContent = '○';
+                div.title = 'Còn trống';
+            }
+
+            return div;
+        }
+
+        // Cập nhật thống kê
+        function updateStats(seats) {
+            const occupied = seats.filter(s => s.first_name && s.last_name).length;
+            const available = seats.length - occupied;
+
+            document.getElementById('totalSeats').textContent = seats.length;
+            document.getElementById('occupiedSeats').textContent = occupied;
+            document.getElementById('availableSeats').textContent = available;
+        }
+
+        // Load danh sách sinh viên theo A-Z
+        async function loadStudentList() {
+            try {
+                const response = await fetch('/api/admin/students');
+                const students = await response.json();
+                renderStudentList(students);
+            } catch (error) {
+                console.error('Error loading student list:', error);
+            }
+        }
+
+        // Render danh sách sinh viên
+        function renderStudentList(students) {
+            const listContainer = document.getElementById('studentList');
+
+            if (students.length === 0) {
+                listContainer.innerHTML = '<p style="text-align: center; color: #999;">Chưa có sinh viên nào đăng ký</p>';
+                return;
+            }
+
+            listContainer.innerHTML = students.map((student, index) => `
+        <div class="student-item">
+          <div>
+            <span class="student-name">${index + 1}. ${student.first_name} ${student.last_name}</span>
+          </div>
+          <div class="student-info">
+            ${getSectionName(student.section)} - Hàng ${student.row}, Cột ${student.col}
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // Lấy tên dãy
+        function getSectionName(section) {
+            const names = {
+                'left': 'Dãy Trái',
+                'middle': 'Dãy Giữa',
+                'right': 'Dãy Phải'
+            };
+            return names[section] || section;
+        }
+
+        // Xuất danh sách sinh viên
+        async function exportStudentList() {
+            try {
+                const response = await fetch('/api/admin/students');
+                const students = await response.json();
+
+                if (students.length === 0) {
+                    alert('Chưa có sinh viên nào đăng ký!');
+                    return;
+                }
+
+                let content = 'DANH SÁCH SINH VIÊN LỚP HỌC (A-Z - Sắp xếp theo Tên)\n';
+                content += '='.repeat(60) + '\n\n';
+                content += 'STT | Họ và Tên | Vị trí\n';
+                content += '-'.repeat(60) + '\n';
+
+                students.forEach((student, index) => {
+                    const fullName = `${student.first_name} ${student.last_name}`;
+                    const position = `${getSectionName(student.section)} - H${student.row}C${student.col}`;
+                    content += `${(index + 1).toString().padEnd(4)}| ${fullName.padEnd(30)}| ${position}\n`;
+                });
+
+                content += '\n' + '='.repeat(50) + '\n';
+                content += `Tổng số: ${students.length} sinh viên\n`;
+                content += `Ngày xuất: ${new Date().toLocaleString('vi-VN')}\n`;
+
+                // Tạo và download file
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `danh-sach-lop-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showStatus('Đã xuất danh sách thành công!', 'success');
+            } catch (error) {
+                showStatus('Lỗi khi xuất danh sách: ' + error.message, 'error');
+            }
+        }
+
+        // Reset toàn bộ dữ liệu
+        async function resetAllData() {
+            if (!confirm('⚠️ BẠN CHẮC CHẮN MUỐN XÓA TOÀN BỘ DỮ LIỆU?\n\nHành động này không thể hoàn tác!')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/reset', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus(data.message, 'success');
+                    loadSeats();
+                } else {
+                    showStatus(data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Lỗi kết nối: ' + error.message, 'error');
+            }
+        }
+
+        // Hiển thị thông báo
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load dữ liệu khi trang được tải
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSeats();
+
+            // Auto refresh mỗi 5 giây
+            setInterval(loadSeats, 5000);
+        });
+    </script>
+</body>
+
+</html>
