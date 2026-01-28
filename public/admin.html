@@ -260,12 +260,15 @@
             justify-content: center;
             gap: 40px;
             margin-bottom: 40px;
+            overflow-x: auto;
+            padding: 10px;
         }
 
         .section {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-width: fit-content;
         }
 
         .section-title {
@@ -296,6 +299,7 @@
             text-align: center;
             padding: 5px;
             word-wrap: break-word;
+            flex-shrink: 0;
         }
 
         .seat.available {
@@ -408,18 +412,143 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+
+            .subtitle {
+                font-size: 0.85em;
+                margin-bottom: 15px;
+            }
+
             .classroom {
-                flex-direction: column;
-                gap: 20px;
+                gap: 8px;
+                justify-content: center;
+                padding: 5px;
+                -webkit-overflow-scrolling: touch;
+                overflow-x: visible;
+            }
+
+            .section {
+                gap: 6px;
+            }
+
+            .section-title {
+                font-size: 0.75em;
+                white-space: nowrap;
+            }
+
+            .row {
+                gap: 4px;
             }
 
             .seat {
-                width: 70px;
-                height: 70px;
+                width: 40px;
+                height: 40px;
+                font-size: 0.5em;
+                border-width: 2px;
+                padding: 2px;
+            }
+
+            .seat::after {
+                font-size: 0.55em;
+                bottom: -15px;
             }
 
             .controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 0.8em;
+                flex: 1;
+                min-width: calc(50% - 4px);
+            }
+
+            .stats {
+                flex-direction: row;
+                gap: 10px;
+                padding: 10px;
+                flex-wrap: wrap;
+            }
+
+            .stat-item {
+                padding: 8px;
+                background: white;
+                border-radius: 5px;
+                flex: 1;
+                min-width: calc(33.33% - 7px);
+            }
+
+            .stat-number {
+                font-size: 1.5em;
+            }
+
+            .stat-label {
+                font-size: 0.75em;
+            }
+
+            .board-label {
+                font-size: 0.95em;
+                padding: 8px;
+                margin-bottom: 15px;
+            }
+
+            .settings-panel {
+                padding: 15px;
+            }
+
+            .settings-form {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .student-list {
+                padding: 15px;
+                margin-top: 20px;
+            }
+
+            .student-list h2 {
+                font-size: 1.3em;
+            }
+
+            .list-container {
+                max-height: 300px;
+                padding: 10px;
+            }
+
+            .student-item {
                 flex-direction: column;
+                gap: 5px;
+                padding: 10px;
+            }
+
+            .auth-modal {
+                padding: 25px;
+                width: 95%;
+            }
+
+            .auth-modal h2 {
+                font-size: 1.5em;
+            }
+        }
+
+        /* Xóa hướng dẫn scroll vì giờ không cần scroll */
+        @media (max-width: 768px) {
+            .classroom {
+                position: relative;
             }
         }
 
@@ -450,7 +579,8 @@
         <div class="auth-modal">
             <h2>🔐 Xác thực Admin</h2>
             <p style="color: #666; margin-bottom: 20px;">Vui lòng nhập key để truy cập</p>
-            <input type="password" id="adminKeyInput" placeholder="Nhập admin key..." onkeypress="if(event.key === 'Enter') verifyAdminKey()">
+            <input type="password" id="adminKeyInput" placeholder="Nhập admin key..."
+                onkeypress="if(event.key === 'Enter') verifyAdminKey()">
             <button onclick="verifyAdminKey()">Xác thực</button>
             <div class="error-msg" id="errorMsg"></div>
         </div>
@@ -548,7 +678,7 @@
         async function verifyAdminKey() {
             const key = document.getElementById('adminKeyInput').value;
             const errorMsg = document.getElementById('errorMsg');
-            
+
             if (!key) {
                 errorMsg.textContent = 'Vui lòng nhập key';
                 return;

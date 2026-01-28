@@ -18,28 +18,28 @@ app.use(express.static('public'));
 // Lấy IP của client
 function getClientIP(req) {
     // Thử lấy từ headers trước (nếu có proxy)
-    let ip = req.headers['x-forwarded-for'] || 
-             req.headers['x-real-ip'] || 
-             req.connection.remoteAddress || 
-             req.socket.remoteAddress ||
-             (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-             req.ip;
-    
+    let ip = req.headers['x-forwarded-for'] ||
+        req.headers['x-real-ip'] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+        req.ip;
+
     // Nếu là ::1 (IPv6 localhost) hoặc ::ffff:127.0.0.1, chuyển sang 127.0.0.1
     if (ip === '::1' || ip === '::ffff:127.0.0.1') {
         ip = '127.0.0.1';
     }
-    
+
     // Nếu có nhiều IP (từ x-forwarded-for), lấy IP đầu tiên
     if (ip && ip.includes(',')) {
         ip = ip.split(',')[0].trim();
     }
-    
+
     // Loại bỏ prefix IPv6 nếu có (::ffff:192.168.1.1 -> 192.168.1.1)
     if (ip && ip.startsWith('::ffff:')) {
         ip = ip.substring(7);
     }
-    
+
     return ip;
 }
 
@@ -56,7 +56,7 @@ app.get('/admin', (req, res) => {
 // API: Xác thực admin key
 app.post('/api/admin/verify', (req, res) => {
     const { key } = req.body;
-    
+
     if (key === ADMIN_KEY) {
         res.json({ success: true, message: 'Xác thực thành công' });
     } else {

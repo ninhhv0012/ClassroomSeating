@@ -58,12 +58,15 @@
             justify-content: center;
             gap: 40px;
             margin-bottom: 30px;
+            overflow-x: auto;
+            padding: 10px;
         }
 
         .section {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-width: fit-content;
         }
 
         .section-title {
@@ -92,6 +95,7 @@
             background: white;
             position: relative;
             font-size: 0.85em;
+            flex-shrink: 0;
         }
 
         .seat:hover:not(.occupied):not(.my-seat) {
@@ -268,14 +272,103 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+
+            .subtitle {
+                font-size: 0.85em;
+                margin-bottom: 15px;
+            }
+
             .classroom {
-                flex-direction: column;
-                gap: 20px;
+                gap: 8px;
+                justify-content: center;
+                padding: 5px;
+                -webkit-overflow-scrolling: touch;
+                overflow-x: visible;
+            }
+
+            .section {
+                gap: 6px;
+            }
+
+            .section-title {
+                font-size: 0.75em;
+                white-space: nowrap;
+            }
+
+            .row {
+                gap: 4px;
             }
 
             .seat {
-                width: 60px;
-                height: 60px;
+                width: 40px;
+                height: 40px;
+                font-size: 0.55em;
+                border-width: 2px;
+                padding: 2px;
+            }
+
+            .seat::after {
+                font-size: 0.55em;
+                bottom: -15px;
+            }
+
+            .board-label {
+                font-size: 0.95em;
+                padding: 8px;
+                margin-bottom: 15px;
+            }
+
+            .legend {
+                flex-direction: row;
+                gap: 10px;
+                padding: 10px;
+                margin-top: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .legend-item {
+                justify-content: center;
+                font-size: 0.85em;
+            }
+
+            .legend-box {
+                width: 20px;
+                height: 20px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 10% auto;
+            }
+
+            .modal-content h2 {
+                font-size: 1.5em;
+            }
+
+            .form-group input {
+                font-size: 1em;
+            }
+        }
+
+        /* Xóa hướng dẫn scroll vì giờ không cần scroll */
+        @media (max-width: 768px) {
+            .classroom {
+                position: relative;
             }
         }
     </style>
@@ -570,7 +663,7 @@
                     document.getElementById('lastName').focus();
                 }
             });
-            
+
             document.getElementById('lastName').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     submitSeat();

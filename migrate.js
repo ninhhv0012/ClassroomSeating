@@ -49,7 +49,7 @@ db.serialize(() => {
     console.log('📝 Cập nhật bảng ip_tracking...');
     db.run('DROP TABLE IF EXISTS ip_tracking_old', (err) => {
         if (err) console.error('Lỗi khi xóa bảng tạm:', err);
-        
+
         db.run('ALTER TABLE ip_tracking RENAME TO ip_tracking_old', (err) => {
             if (err) {
                 console.log('✓ Bảng ip_tracking chưa tồn tại hoặc đã được cập nhật');
@@ -95,7 +95,7 @@ db.serialize(() => {
                         console.log('\n🎉 Migration hoàn tất!');
                         console.log('📌 Bây giờ mỗi browser sẽ được tracking riêng biệt');
                         console.log('📌 Khởi động lại server để áp dụng thay đổi\n');
-                        
+
                         db.close();
                     });
                 });
