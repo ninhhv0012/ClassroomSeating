@@ -75,8 +75,8 @@ app.get('/api/seats', (req, res) => {
 });
 
 // API: Lấy chỗ ngồi cho user (ẩn tên người khác)
-app.get('/api/seats/user', (req, res) => {
-    const clientIP = getClientIP(req);
+app.post('/api/seats/user', (req, res) => {
+    const { sessionId } = req.body;
 
     db.all('SELECT * FROM seats ORDER BY row, section, col', (err, rows) => {
         if (err) {
@@ -90,18 +90,23 @@ app.get('/api/seats/user', (req, res) => {
             col: seat.col,
             section: seat.section,
             occupied: !!(seat.first_name && seat.last_name),
-            isMyIP: seat.ip_address === clientIP
+            isMyIP: sessionId && seat.session_id === sessionId
         }));
 
         res.json(sanitizedRows);
     });
 });
 
-// API: Kiểm tra IP đã submit chưa
-app.get('/api/check-ip', (req, res) => {
+// API: Kiểm tra session đã submit chưa
+app.post('/api/check-session', (req, res) => {
+    const { sessionId } = req.body;
     const clientIP = getClientIP(req);
 
-    db.get('SELECT * FROM ip_tracking WHERE ip_address = ?', [clientIP], (err, row) => {
+    if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID required' });
+    }
+
+    db.get('SELECT * FROM ip_tracking WHERE session_id = ?', [sessionId], (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -111,15 +116,20 @@ app.get('/api/check-ip', (req, res) => {
 
 // API: User submit tên
 app.post('/api/submit-seat', (req, res) => {
-    const { seatId, firstName, lastName } = req.body;
+    const { seatId, firstName, lastName, sessionId } = req.body;
     const clientIP = getClientIP(req);
+    const userAgent = req.headers['user-agent'] || 'Unknown';
 
     if (!seatId || !firstName || firstName.trim() === '' || !lastName || lastName.trim() === '') {
         return res.status(400).json({ error: 'Vui lòng nhập đầy đủ Họ và Tên' });
     }
 
-    // Kiểm tra IP đã submit chưa
-    db.get('SELECT * FROM ip_tracking WHERE ip_address = ?', [clientIP], (err, row) => {
+    if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID required' });
+    }
+
+    // Kiểm tra session đã submit chưa
+    db.get('SELECT * FROM ip_tracking WHERE session_id = ?', [sessionId], (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -142,18 +152,18 @@ app.post('/api/submit-seat', (req, res) => {
                 return res.status(409).json({ error: 'Chỗ ngồi đã có người' });
             }
 
-            // Cập nhật chỗ ngồi và tracking IP
+            // Cập nhật chỗ ngồi và tracking session
             db.run(
-                'UPDATE seats SET first_name = ?, last_name = ?, ip_address = ? WHERE id = ?',
-                [firstName.trim(), lastName.trim(), clientIP, seatId],
+                'UPDATE seats SET first_name = ?, last_name = ?, ip_address = ?, session_id = ?, user_agent = ? WHERE id = ?',
+                [firstName.trim(), lastName.trim(), clientIP, sessionId, userAgent, seatId],
                 function (err) {
                     if (err) {
                         return res.status(500).json({ error: err.message });
                     }
 
                     db.run(
-                        'INSERT INTO ip_tracking (ip_address) VALUES (?)',
-                        [clientIP],
+                        'INSERT INTO ip_tracking (session_id, ip_address, user_agent) VALUES (?, ?, ?)',
+                        [sessionId, clientIP, userAgent],
                         (err) => {
                             if (err) {
                                 return res.status(500).json({ error: err.message });
@@ -185,7 +195,7 @@ app.get('/api/admin/students', (req, res) => {
 
 // API: Admin xóa tất cả dữ liệu (reset)
 app.post('/api/admin/reset', (req, res) => {
-    db.run('UPDATE seats SET first_name = NULL, last_name = NULL, ip_address = NULL', (err) => {
+    db.run('UPDATE seats SET first_name = NULL, last_name = NULL, ip_address = NULL, session_id = NULL, user_agent = NULL', (err) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }

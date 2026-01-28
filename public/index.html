@@ -345,11 +345,36 @@
         let selectedSeatId = null;
         let hasSubmitted = false;
         let currentSettings = null;
+        let sessionId = null;
 
-        // Kiểm tra IP đã submit chưa
+        // Tạo hoặc lấy session ID unique cho browser
+        function getSessionId() {
+            if (!sessionId) {
+                sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) {
+                    // Tạo session ID unique từ timestamp + random + browser fingerprint
+                    const timestamp = Date.now();
+                    const random = Math.random().toString(36).substring(2, 15);
+                    const screenInfo = `${screen.width}x${screen.height}x${screen.colorDepth}`;
+                    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const fingerprint = btoa(`${navigator.userAgent}|${screenInfo}|${timezone}|${navigator.language}`);
+                    sessionId = `${timestamp}-${random}-${fingerprint.substring(0, 20)}`;
+                    localStorage.setItem('sessionId', sessionId);
+                }
+            }
+            return sessionId;
+        }
+
+        // Kiểm tra session đã submit chưa
         async function checkIPStatus() {
             try {
-                const response = await fetch('/api/check-ip');
+                const response = await fetch('/api/check-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionId: getSessionId() })
+                });
                 const data = await response.json();
                 hasSubmitted = data.hasSubmitted;
 
@@ -357,7 +382,7 @@
                     showStatus('Bạn đã Điểm danh rồi!', 'warning');
                 }
             } catch (error) {
-                console.error('Error checking IP:', error);
+                console.error('Error checking session:', error);
             }
         }
 
@@ -365,7 +390,13 @@
         async function loadSeats() {
             try {
                 const [seatsRes, settingsRes] = await Promise.all([
-                    fetch('/api/seats/user'),
+                    fetch('/api/seats/user', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ sessionId: getSessionId() })
+                    }),
                     fetch('/api/admin/settings')
                 ]);
                 const seats = await seatsRes.json();
@@ -504,7 +535,8 @@
                     body: JSON.stringify({
                         seatId: selectedSeatId,
                         firstName: firstName,
-                        lastName: lastName
+                        lastName: lastName,
+                        sessionId: getSessionId()
                     })
                 });
 

@@ -16,6 +16,8 @@ db.serialize(() => {
       first_name TEXT,
       last_name TEXT,
       ip_address TEXT,
+      session_id TEXT,
+      user_agent TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(row, col, section)
     )
@@ -24,7 +26,9 @@ db.serialize(() => {
     // Bảng theo dõi IP đã submit
     db.run(`
     CREATE TABLE IF NOT EXISTS ip_tracking (
-      ip_address TEXT PRIMARY KEY,
+      session_id TEXT PRIMARY KEY,
+      ip_address TEXT,
+      user_agent TEXT,
       submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
